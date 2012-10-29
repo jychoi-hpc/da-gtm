@@ -1,0 +1,122 @@
+-. Windows
+cmake -G "NMake Makefiles" -DCMAKE_PREFIX_PATH:PATH="C:/HDF5/1.8.5.patch1.x64;C:/Program Files/Microsoft HPC Pack 2008 SDK" ..
+cmake -G "Visual Studio 10 Win64" -DCMAKE_PREFIX_PATH:PATH="C:/HDF5/1.8.5.patch1.x64;C:/Program Files/Microsoft HPC Pack 2008 SDK" ..
+
+set MPI_HOME="C:\Program Files\Microsoft HPC Pack 2008 SDK"
+set HDF5_HOME="C:\HDF5\1.8.5.patch1.x64"
+set GSL_HOME="C:\libgsl-1.8"
+
+cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_PREFIX_PATH:PATH=%MPI_HOME%;%HDF5_HOME%;%GSL_HOME% -DUSE_MKL:BOOL=OFF ..
+
+cmake -G "NMake Makefiles" ^
+-DCMAKE_BUILD_TYPE:STRING=Release ^
+-DCMAKE_PREFIX_PATH:PATH=%MPI_HOME%;%HDF5_HOME%;%GSL_HOME% ^
+-DUSE_MKL:BOOL=ON ^
+..
+
+cmake -G "Visual Studio 10 Win64" 
+
+mkdir build
+cd build
+set BUILD_TYPE=Release
+REM set BUILD_TYPE=Debug
+set BUILD_TOOL="NMake Makefiles"
+REM set BUILD_TOOL="Visual Studio 10 Win64"
+set CFLAGS="-O3 -DNDEBUG -m64 -fp-model strict"
+REM CFLAGS="-O3 -DNDEBUG -mtune=core2 -march=core2 -m64 -fp-model strict"
+set CC="C:/Program Files (x86)/Intel/ComposerXE-2011/bin/intel64/icl.exe"
+set CPP=%CC%
+set MPI_HOME="C:\Program Files\Microsoft HPC Pack 2008 SDK"
+set HDF5_HOME="C:\HDF5\1.8.5.patch1.x64"
+set GSL_HOME="C:\libgsl-1.8"
+
+cmake ^
+-G %BUILD_TOOL% ^
+-DCMAKE_PREFIX_PATH:PATH=%MPI_HOME%;%HDF5_HOME%;%GSL_HOME% ^
+-DCMAKE_BUILD_TYPE:STRING=%BUILD_TYPE% ^
+REM -DCMAKE_C_COMPILER:FILEPATH=%CC% ^
+REM -DCMAKE_C_FLAGS_RELEASE:STRING=%CFLAGS% ^
+REM -DCMAKE_C_FLAGS_DEBUG:STRING="-g" ^
+REM -DCMAKE_CXX_COMPILER:FILEPATH=%CPP% ^
+REM -DCMAKE_CXX_FLAGS_RELEASE:STRING=%CFLAGS% ^
+REM -DCMAKE_CXX_FLAGS_DEBUG:STRING="-g" ^
+-DUSE_MKL:BOOL=ON ^
+..
+
+
+-DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_PREFIX_PATH:PATH=%MPI_HOME%;%HDF5_HOME%;%GSL_HOME% ..
+
+-. Linux
+mkdir build
+cd build
+#BUILD_TYPE=Debug
+#CFLAGS="-O3 -DNDEBUG -mtune=core2 -march=core2 -m64 -fp-model strict"
+#CFLAGS="-O3 -DNDEBUG -m64 -fp-model precise -fp-model source -std=c99"
+#CFLAGS="-O3 -DNDEBUG -m64 -fp-model strict -std=c99"
+#auto-vectorization doesn't work with -fp-model option
+BUILD_TYPE=Release
+CFLAGS="-g -O3 -DNDEBUG -m64 -std=c99 -vec-report" 
+CXXFLAGS="-g -O3 -DNDEBUG -m64 -vec-report" 
+CC=`which icc`
+CXX=`which icpc`
+
+-. Cray
+module swap PrgEnv-pgi PrgEnv-gnu
+module load xtpe-shanghai
+module load hdf5-parallel
+module load acml
+
+CC=`which cc`
+CXX=`which CC`
+CFLAGS="-g -O3 -DNDEBUG -std=c99" 
+CXXFLAGS="-g -O3 -DNDEBUG" 
+
+CMAKE_PREFIX_PATH=$MPICH_DIR:$HDF5_DIR \
+cmake \
+-DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE \
+-DCMAKE_C_COMPILER:FILEPATH=$CC \
+-DCMAKE_C_FLAGS_RELEASE:STRING="$CFLAGS" \
+-DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
+-DCMAKE_CXX_COMPILER:FILEPATH=$CXX \
+-DCMAKE_CXX_FLAGS_RELEASE:STRING="$CXXFLAGS" \
+-DCMAKE_CXX_FLAGS_DEBUG:STRING="-g" \
+-DUSE_MKL:BOOL=OFF \
+-DUSE_IPP:BOOL=OFF \
+-DBUILD_PLATFORM:STRING=Cray \
+-DCPU_MHZ:STRING=2400 \
+..
+
+-. Cray with Intel (Use intel compiler for c and GCC for cxx)
+BUILD_TYPE=Release
+CC=`which icc`
+CXX=`which CC`
+CFLAGS="-g -O3 -DNDEBUG -std=c99 -vec-report"
+CXXFLAGS="-g -O3 -DNDEBUG -DMPICH_IGNORE_CXX_SEEK"
+
+CMAKE_PREFIX_PATH=$MPICH_DIR:$HDF5_DIR \
+cmake \
+-DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE \
+-DCMAKE_C_COMPILER:FILEPATH=$CC \
+-DCMAKE_C_FLAGS_RELEASE:STRING="$CFLAGS" \
+-DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
+-DCMAKE_CXX_COMPILER:FILEPATH=$CXX \
+-DCMAKE_CXX_FLAGS_RELEASE:STRING="$CXXFLAGS" \
+-DCMAKE_CXX_FLAGS_DEBUG:STRING="-g" \
+-DUSE_MKL:BOOL=OFF \
+-DUSE_IPP:BOOL=OFF \ 
+-DUSE_ACML:BOOL=ON \ 
+-DBUILD_PLATFORM:STRING=Cray \ 
+-DCPU_MHZ:STRING=2400 \ 
+.. 
+
+
+
+
+-- GSL
+CC=cc ./configure --disable-shared --enable-static
+cat config.h|sed 's;#define HAVE_INLINE 1;#undef HAVE_INLINE;g'  > 
+config.h.new
+mv config.h.new config.h
+make
+
+-L/N/u/jychoi/intel/lib/intel64/ -lsvml -lirc

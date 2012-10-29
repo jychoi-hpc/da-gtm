@@ -1,0 +1,20 @@
+package cgl.pviz.rpc;
+
+message Position 
+{
+  required double x = 1;
+  required double y = 2;
+  required double z = 3;
+}
+
+message PvizMessage
+{
+    enum mtype { DATA = 0; SYNC = 1; FIN = 2; } // DATA packet (0) or Control packet (>0)
+
+    required mtype Type = 1;
+    required int64 Timestamp = 2;
+    required int64 Stepid = 3;
+
+    repeated int32 Labels = 4;
+    repeated Position Positions = 5;
+}

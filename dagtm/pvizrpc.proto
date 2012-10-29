@@ -1,0 +1,30 @@
+package cgl.pviz.rpc;
+
+message VoidMessage 
+{
+}
+
+message ListInt 
+{
+  repeated int32 val = 1;
+}
+
+message ListPosition 
+{
+  repeated Position pos = 1;
+}
+
+message Position 
+{
+  required double x = 1;
+  required double y = 2;
+  required double z = 3;
+}
+
+service PvizRpcService {
+  rpc getIds (VoidMessage) returns (ListInt);
+  rpc getLabels (VoidMessage) returns (ListInt);
+  rpc getPositions (VoidMessage) returns (ListPosition);
+  rpc getLatentPositions (VoidMessage) returns (ListPosition);
+  rpc Pause (VoidMessage) returns (VoidMessage);
+}

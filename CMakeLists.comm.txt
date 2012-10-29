@@ -1,0 +1,208 @@
+## DEBUG
+macro(var_message var) 
+  message(${var} " : " ${${var}})
+endmacro()
+
+## MPI
+find_package(MPI REQUIRED)
+include_directories (${MPI_INCLUDE_PATH})
+
+if (WIN32)
+  ## HDF5
+  set(HDF5_LIBNAMES hdf5dll)
+  ## The following doesn't work
+  #set(HDF5_LIBNAMES hdf5)
+  find_path(HDF5_INCLUDE_DIR hdf5.h)
+  include_directories(${HDF5_INCLUDE_DIR} ${HDF5_INCLUDE_DIR}/cpp)
+  add_definitions(-DH5_USE_16_API)
+  foreach(LIB ${HDF5_LIBNAMES})
+    set(HDF5_LIB "HDF5_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+    find_library(HDF5_LIB ${LIB})
+    if (HDF5_LIB)
+      list(APPEND HDF5_LIBRARIES ${HDF5_LIB})
+    else (HDF5_LIB)
+      message(SEND_ERROR "Unable to find HDF5 library ${LIB}")
+    endif (HDF5_LIB)
+  endforeach(LIB)
+else (WIN32)
+  ## HDF5
+  find_package(HDF5 REQUIRED)
+  include_directories (${HDF5_INCLUDE_DIRS} ${HDF5_INCLUDE_DIRS}/cpp)
+  add_definitions(-DH5_USE_16_API)
+endif (WIN32)
+
+## GSL
+if (WIN32)
+  set(GSL_LIBNAMES libgsl libgslcblas)
+  set(GSL_GSL_LIBNAME libgsl)
+  set(GSL_GSLCBLAS_LIBNAME libgslcblas)
+  #add_definitions(/DGSL_DLL)
+else (WIN32)
+  set(GSL_LIBNAMES gsl gslcblas)
+  set(GSL_GSL_LIBNAME gsl)
+  set(GSL_GSLCBLAS_LIBNAME gslcblas)
+endif (WIN32)
+
+find_path(GSL_INCLUDE_DIR 
+  NAMES gsl/gsl_blas.h
+  HINTS
+    ENV GSL_HOME GSL_ROOT
+  PATH_SUFFIXES
+    include Include
+)
+
+set(GSL_LIBRARIES)
+foreach(LIB ${GSL_LIBNAMES})
+  set(GSL_LIB "GSL_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+  find_library(GSL_LIB 
+    NAMES ${LIB}
+    HINTS
+      ENV GSL_HOME GSL_ROOT 
+    PATH_SUFFIXES
+      lib
+  )
+  if (GSL_LIB)
+    list(APPEND GSL_LIBRARIES ${GSL_LIB})
+  else (GSL_LIB)
+    message(SEND_ERROR "Unable to find GSL library ${LIB}")
+  endif (GSL_LIB)
+endforeach(LIB)
+set(GSL_LIB "GSL_LIB-NOTFOUND" CACHE INTERNAL "Scratch variable for GSL detection" FORCE)
+
+find_library(GSL_GSL_LIBRARY 
+  NAMES ${GSL_GSL_LIBNAME}
+  HINTS
+    ENV GSL_HOME GSL_ROOT 
+  PATH_SUFFIXES
+    lib
+)
+
+find_library(GSL_GSLCBLAS_LIBRARY 
+  NAMES ${GSL_GSLCBLAS_LIBNAME}
+  HINTS
+    ENV GSL_HOME GSL_ROOT 
+  PATH_SUFFIXES
+    lib
+)
+
+mark_as_advanced(
+  GSL_INCLUDE_DIR
+  GSL_LIBRARIES
+  GSL_GSL_LIBRARY
+  GSL_GSLCBLAS_LIBRARY
+)
+
+include_directories(${GSL_INCLUDE_DIR})
+
+#-----------------------------------------------------------------------------
+# Option to enable USE_MKL
+#-----------------------------------------------------------------------------
+option (USE_MKL "Enable the use of MKL" ON)
+if (USE_MKL)
+  set(MKL_LIBNAMES mkl_intel_lp64 mkl_sequential mkl_core)
+
+  find_path(MKL_INCLUDE_DIR 
+    NAMES mkl.h
+    HINTS
+      ENV MKL_HOME MKL_ROOT MKLROOT
+    PATH_SUFFIXES
+      include Include
+  )
+
+  set(MKL_LIBRARIES)
+  foreach(LIB ${MKL_LIBNAMES})
+    set(MKL_LIB "MKL_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+    find_library(MKL_LIB 
+      NAMES ${LIB}
+      HINTS
+        ENV MKL_HOME MKL_ROOT MKLROOT
+      PATH
+        $ENV{MKLROOT} $ENV{MKLROOT}/lib
+      PATH_SUFFIXES
+        lib intel64
+    )
+    if (MKL_LIB)
+      list(APPEND MKL_LIBRARIES ${MKL_LIB})
+    else (MKL_LIB)
+      message(SEND_ERROR "Unable to find MKL library ${LIB}")
+    endif (MKL_LIB)
+  endforeach(LIB)
+  set(MKL_LIB "MKL_LIB-NOTFOUND" CACHE INTERNAL "Scratch variable for MKL detection" FORCE)
+  
+  mark_as_advanced(
+    MKL_INCLUDE_DIR
+    MKL_LIBRARIES
+  )
+endif (USE_MKL)
+
+#-----------------------------------------------------------------------------
+# Option to enable USE_ACML
+#-----------------------------------------------------------------------------
+option (USE_ACML "Enable the use of ACML" OFF)
+if (USE_ACML)
+  find_library(ACML_CBLAS_LIBRARY 
+    NAMES acmlcblas
+    HINTS
+      ENV GSL_HOME GSL_ROOT 
+    PATH_SUFFIXES
+      lib
+  )
+endif (USE_ACML)
+
+#-----------------------------------------------------------------------------
+# Option to enable USE_IPP
+#-----------------------------------------------------------------------------
+option (USE_IPP "Enable the use of IPP" ON)
+if (USE_IPP)
+  include_directories($ENV{IPPROOT}/include)
+  add_definitions(-DCOMM_IPP_ON)
+endif (USE_IPP)
+
+#-----------------------------------------------------------------------------
+# Compiler Settings
+#-----------------------------------------------------------------------------
+if (WIN32)
+  set (CMAKE_C_COMPILER icl)
+  set (CMAKE_C_FLAGS "/Qstd=c99")
+  set (CMAKE_CXX_COMPILER icl)
+  set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
+  add_definitions(-DWIN32)
+elseif (APPLE)
+  if (${CMAKE_GENERATOR} MATCHES "Xcode")
+    ## Unable to set icc in Xcode
+  else ()
+    #set (CMAKE_C_COMPILER icc CACHE FILEPATH "C compiler used.")
+    #set (CMAKE_C_FLAGS "-O3 -mtune=core2 -march=core2 -m64 -fp-model strict")
+    #set (CMAKE_CXX_COMPILER icpc)
+    #set (CMAKE_CXX_FLAGS "-O3 -mtune=core2 -march=core2 -m64 -fp-model strict")
+  endif ()
+else ()
+  if (NOT BUILD_PLATFORM)
+    message("General platform ... ")
+  elseif (BUILD_PLATFORM MATCHES "Cray")
+    message("Cray ... ")
+    add_definitions(-DMPICH_IGNORE_CXX_SEEK)
+  else ()
+    message("Unknown platform ... ")
+  endif()
+endif ()
+
+#add_definitions(-DUSE_LOCAL_GSL)
+#add_definitions(-DCLS=16)
+
+#-----------------------------------------------------------------------------
+# Option to enable USE_TICTOC
+#-----------------------------------------------------------------------------
+option (USE_TICTOC "Enable tic/toc timing" OFF)
+if (USE_TICTOC)
+  add_definitions(-DLOG_TICTOC_ON)
+endif (USE_TICTOC)
+
+#-----------------------------------------------------------------------------
+# Option to enable USE_TICTOC
+#-----------------------------------------------------------------------------
+option (USE_VECTORIZED_DIST "Enable to use VECTORIZED_DIST" OFF)
+if (USE_VECTORIZED_DIST)
+  add_definitions(-DCOMM_VECTORIZED_DIST_ON)
+endif (USE_VECTORIZED_DIST)
+
