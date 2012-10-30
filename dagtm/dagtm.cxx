@@ -153,7 +153,8 @@ static void help()
         "-S number    : start temp",
         "-t dataset   : dataset name for T (default: T)",
         "-v number    : set verbose level",
-        "-w dataset   : dataset name for W (default: W)",
+        "-w prefix    : checkpointing file prefix",
+        "-W dataset   : dataset name for W (default: W)",
         "-x dataset   : dataset name for X (default: X)",
         "-z PxQ       : define P-by-Q compute grid",
         0
@@ -603,6 +604,7 @@ gsl_vector *vlenN, *vlenK;
 char *filename_h5input = "INPUT.h5";
 char *filename_h5output = NULL;
 char *filename_h5checkpoint = NULL;
+char *filename_h5ckprefix = "ckp.";
 char *dsetname_mT = "T.dat";
 char *dsetname_mX = "X.dat";
 char *dsetname_mFI = "FI.dat";
@@ -626,8 +628,8 @@ int MPI_NNODE = 0;          // P-by-Q (=R) grid
 char c;
 //int isRandomSetup = FALSE;
 int isLogToFile = FALSE;
-int isCheckpointing = TRUE;
 int checkpointingPerNloop = 100;
+int isCheckpointing = TRUE;
 int isForceCheckpointing = FALSE;
 
 int Kbar;
@@ -709,7 +711,7 @@ int main(int argc, char *argv[])
     opterr = 0;
     while ((c =
             getopt(argc, argv,
-                   "a:b:B:c:e:E:f:g:hHi:j:k:K:lL:mM:o:pP:r:Rs:S:t:v:w:x:z:")) != -1)
+                   "a:b:B:c:e:E:f:g:hHi:j:k:K:lL:mM:no:pP:r:Rs:S:t:v:w:W:x:z:")) != -1)
     {
         //printf("char : %c\n", c);
         switch (c)
@@ -820,6 +822,9 @@ int main(int argc, char *argv[])
         case 'M':
             M = atoi(optarg);
             break;
+        case 'n':
+            isCheckpointing = FALSE;
+            break;
         case 'o':
             filename_h5output = optarg;
             break;
@@ -849,6 +854,9 @@ int main(int argc, char *argv[])
             DAGTM_SETLOGLEVEL(atoi(optarg));
             break;
         case 'w':
+            filename_h5ckprefix = optarg;
+            break;
+        case 'W':
             dsetname_mW = optarg;
             break;
         case 'x':
@@ -1635,7 +1643,7 @@ int main(int argc, char *argv[])
             logtoc(LOG_MAIN);
 
             if (
-                ((isCheckpointing) && ((nloop % checkpointingPerNloop) == 0)) ||
+                (isCheckpointing && ((nloop % checkpointingPerNloop) == 0)) ||
                 isForceCheckpointing
                 )
             {
@@ -1645,7 +1653,7 @@ int main(int argc, char *argv[])
                 DEBUG(DAGTM_INFO_MSG, "Writing to file ... ");
 
                 char filename_h5check[80];
-                sprintf(filename_h5check, "%s.%d.h5", "ckp", nloop);
+                sprintf(filename_h5check, "%s%d.h5", filename_h5ckprefix, nloop);
                 DEBUG(DAGTM_INFO_MSG, "Writing to file ... %s", filename_h5check);
 
                 h5ckpfileid = h5create(filename_h5check, MPI_COMM_WORLD);
