@@ -1179,7 +1179,6 @@ int main(int argc, char *argv[])
         DEBUG(DAGTM_INFO_MSG, "Temp is being read ... ");
         h5read_scalar(h5ckpfileid, dsetname_temp, 
                       H5T_NATIVE_DOUBLE, &temp);
-        startTemp = temp;
 
         // iter
         DEBUG(DAGTM_INFO_MSG, "iter is being read ... ");
@@ -1192,6 +1191,9 @@ int main(int argc, char *argv[])
                       H5T_NATIVE_INT, &dagtm_seed);
 
         H5FCLOSEANDSET(h5ckpfileid); // Close infile
+
+        startTemp = temp;
+        maxloop = nloop + maxloop;
     }
 
     // Open outfile
