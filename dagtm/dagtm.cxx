@@ -78,6 +78,7 @@ static __huge_valf_t __huge_valf = { __HUGE_VALF_bytes };
     {                                                                   \
         if (h5infileid != HID_INVALID) H5FCLOSEANDSET(h5infileid);      \
         if (h5outfileid != HID_INVALID) H5FCLOSEANDSET(h5outfileid);    \
+        fprintf(stderr, "Fatal error : %s\n", #cond );                  \
         MPI_Finalize();                                                 \
         return -1;                                                      \
     }                                                                   \
@@ -631,6 +632,7 @@ int isLogToFile = FALSE;
 int checkpointingPerNloop = 100;
 int isCheckpointing = TRUE;
 int isForceCheckpointing = FALSE;
+int doInterpolation = FALSE;
 
 int Kbar;
 int Nbar;
@@ -711,7 +713,7 @@ int main(int argc, char *argv[])
     opterr = 0;
     while ((c =
             getopt(argc, argv,
-                   "a:b:B:c:e:E:f:g:hHi:j:k:K:lL:mM:no:pP:r:Rs:S:t:v:w:W:x:z:")) != -1)
+                   "a:b:B:c:e:E:f:g:hHi:Ij:k:K:lL:mM:no:pP:r:Rs:S:t:v:w:W:x:z:")) != -1)
     {
         //printf("char : %c\n", c);
         switch (c)
@@ -779,6 +781,9 @@ int main(int argc, char *argv[])
             break;
         case 'i':
             filename_h5input = optarg;
+            break;
+        case 'I':
+            doInterpolation = TRUE;
             break;
         case 'j':
             maxloop = atoi(optarg);
@@ -1225,6 +1230,56 @@ int main(int argc, char *argv[])
 
     ret = dagtm_queue_alloc(&QualQueue, INIT_QUEUE_SIZE, DBL_MAX);
     CHECK(ret == GSL_SUCCESS);
+
+    if (doInterpolation)
+    {
+        DEBUG(DAGTM_CRITIC_MSG, "Interpolating ... ");
+     
+        if (filename_h5checkpoint == NULL)
+        {
+            DEBUG(DAGTM_CRITIC_MSG, "No checkpointing file.. ");
+        }
+   
+        //--------------------
+        // Comptue Resp
+        //--------------------
+        DEBUG(DAGTM_INFO_MSG, "Compute RESP ... ");
+        dagtm_mpi_resp(K, beta, mDsub, isDA, temp, mRsub,
+                       vgc, vgc2, grid.col_comm);
+
+        //--------------------
+        // Comptue MAP
+        //--------------------
+        DEBUG(DAGTM_INFO_MSG, "Compute MAP ... ");
+        result =
+            gsl_blas_dgemm(CblasTrans, CblasNoTrans, 1, mRsub, mXsub, 0,
+                           mMsub);
+
+        DEBUG(DAGTM_INFO_MSG, "Reduce mMsub ... ");
+        MPI_Allreduce(MPI_IN_PLACE, mMsub->data,
+                      (int) (mMsub->size1 * mMsub->tda), MPI_DOUBLE,
+                      MPI_SUM, grid.col_comm);
+
+        //--------------------
+        // Write to file
+        //--------------------
+        DEBUG(DAGTM_INFO_MSG, "Writing to file ... ");
+
+        h5outfileid = h5append(filename_h5output, grid.comm);
+        {
+            // Write M
+            DEBUG(DAGTM_INFO_MSG, "mMsub is being saved ... ");
+            h5save_byrow(h5outfileid, dsetname_mM, mMsub,
+                         N, L, NsplitbyQoffsets[grid.my_col_coord],
+                         NbarSplitbyPcounts[grid.my_row_coord],
+                         NbarSplitbyPoffsets[grid.my_row_coord]);
+        }
+        
+        H5FCLOSEANDSET(h5outfileid);
+        
+        MPI_Finalize();
+        return 0;
+    }
 
 #ifdef DAGTM_PVIZRPC_SERVER_ON
     boost::asio::io_service io_service;
