@@ -592,7 +592,7 @@ double eps = 1e-6;
 double eps2 = 1e-3;
 unsigned int nloop = 0;
 unsigned int lloop = 0;
-unsigned int maxloop = UINT_MAX;
+unsigned int maxloop = 0;
 
 // Cooling Schedule
 double alpha = 0.99;
@@ -1184,7 +1184,6 @@ int main(int argc, char *argv[])
         DEBUG(DAGTM_INFO_MSG, "Temp is being read ... ");
         h5read_scalar(h5ckpfileid, dsetname_temp, 
                       H5T_NATIVE_DOUBLE, &temp);
-        startTemp = temp;
 
         // iter
         DEBUG(DAGTM_INFO_MSG, "iter is being read ... ");
@@ -1197,6 +1196,12 @@ int main(int argc, char *argv[])
                       H5T_NATIVE_INT, &dagtm_seed);
 
         H5FCLOSEANDSET(h5ckpfileid); // Close infile
+
+        startTemp = temp;
+        if (maxloop)
+        {
+            maxloop = nloop + maxloop;
+        }
     }
 
     // Open outfile
@@ -1593,6 +1598,81 @@ int main(int argc, char *argv[])
             // End logging LOG_LGLH 
             MPI_TOC(LOG_LGLH);
 
+            if (
+                (isCheckpointing && ((nloop % checkpointingPerNloop) == 0)) ||
+                isForceCheckpointing
+                )
+            {
+                //--------------------
+                // Write to file
+                //--------------------
+                DEBUG(DAGTM_INFO_MSG, "Writing to file ... ");
+
+                char filename_h5check[80];
+                sprintf(filename_h5check, "%s%d.h5", filename_h5ckprefix, nloop);
+                DEBUG(DAGTM_INFO_MSG, "Writing to file ... %s", filename_h5check);
+
+                h5ckpfileid = h5create(filename_h5check, MPI_COMM_WORLD);
+                CHECK(h5ckpfileid != FAIL);
+
+                // X
+                DEBUG(DAGTM_INFO_MSG, "mXsub is being saved ... ");
+                h5save_byrow(h5ckpfileid, dsetname_mX, mXsub,
+                             K, L, KsplitbyPoffsets[grid.my_row_coord],
+                             KbarSplitbyQcounts[grid.my_col_coord],
+                             KbarSplitbyQoffsets[grid.my_col_coord]);
+
+                // FI
+                DEBUG(DAGTM_INFO_MSG, "mFIsub is being saved ... ");
+                h5save_byrow(h5ckpfileid, dsetname_mFI, mFIsub,
+                             K, M + 1, KsplitbyPoffsets[grid.my_row_coord],
+                             KbarSplitbyQcounts[grid.my_col_coord],
+                             KbarSplitbyQoffsets[grid.my_col_coord]);
+
+                // Y
+                DEBUG(DAGTM_INFO_MSG, "mYsub is being saved ... ");
+                h5save_byrow(h5ckpfileid, dsetname_mY, mYsub,
+                             K, D, KsplitbyPoffsets[grid.my_row_coord],
+                             KbarSplitbyQcounts[grid.my_col_coord],
+                             KbarSplitbyQoffsets[grid.my_col_coord]);
+
+                //// W
+                //DEBUG(DAGTM_INFO_MSG, "mW is being saved ... ");
+                //h5save_byrow(h5ckpfileid, dsetname_mW, mW,
+                //             M + 1, D, 0,
+                //             MsplitbyRcounts[grid.my_rank],
+                //             MsplitbyRoffsets[grid.my_rank]);
+
+                // beta
+                DEBUG(DAGTM_INFO_MSG, "beta is being saved ... ");
+                h5save_scalar(h5ckpfileid, dsetname_vbeta,
+                              H5T_NATIVE_DOUBLE, &beta);
+
+                // temp
+                DEBUG(DAGTM_INFO_MSG, "Temp is being saved ... ");
+                h5save_scalar(h5ckpfileid, dsetname_temp, 
+                              H5T_NATIVE_DOUBLE, &temp);
+
+                // iter
+                DEBUG(DAGTM_INFO_MSG, "iter is being saved ... ");
+                h5save_scalar(h5ckpfileid, dsetname_iter, 
+                              H5T_NATIVE_INT, &nloop);
+                
+                // seed
+                DEBUG(DAGTM_INFO_MSG, "seed is being saved ... ");
+                h5save_scalar(h5ckpfileid, dsetname_seed, 
+                              H5T_NATIVE_INT, &dagtm_seed);
+                
+                H5FCLOSEANDSET(h5ckpfileid);
+
+                if (isForceCheckpointing)
+                {
+                    DEBUG(DAGTM_CRITIC_MSG, "Force checkpointing done");
+                    MPI_Finalize();
+                    return 0;
+                }
+            }
+
             //diff = qual - qual_old;
             if ((ABS(diff) < eps))
             {
@@ -1600,7 +1680,7 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            if (maxloop == UINT_MAX)    // maxloop is not set
+            if (!maxloop)    // maxloop is not set
             {
                 if (nloop > INIT_QUEUE_SIZE)    // try tp detect repeating (repeating windows size is INIT_QUEUE_SIZE) 
                 {
@@ -1697,82 +1777,7 @@ int main(int argc, char *argv[])
             MPI_Barrier(grid.comm);
             logtoc(LOG_MAIN);
 
-            if (
-                (isCheckpointing && ((nloop % checkpointingPerNloop) == 0)) ||
-                isForceCheckpointing
-                )
-            {
-                //--------------------
-                // Write to file
-                //--------------------
-                DEBUG(DAGTM_INFO_MSG, "Writing to file ... ");
-
-                char filename_h5check[80];
-                sprintf(filename_h5check, "%s%d.h5", filename_h5ckprefix, nloop);
-                DEBUG(DAGTM_INFO_MSG, "Writing to file ... %s", filename_h5check);
-
-                h5ckpfileid = h5create(filename_h5check, MPI_COMM_WORLD);
-                CHECK(h5ckpfileid != FAIL);
-
-                // X
-                DEBUG(DAGTM_INFO_MSG, "mXsub is being saved ... ");
-                h5save_byrow(h5ckpfileid, dsetname_mX, mXsub,
-                             K, L, KsplitbyPoffsets[grid.my_row_coord],
-                             KbarSplitbyQcounts[grid.my_col_coord],
-                             KbarSplitbyQoffsets[grid.my_col_coord]);
-
-                // FI
-                DEBUG(DAGTM_INFO_MSG, "mFIsub is being saved ... ");
-                h5save_byrow(h5ckpfileid, dsetname_mFI, mFIsub,
-                             K, M + 1, KsplitbyPoffsets[grid.my_row_coord],
-                             KbarSplitbyQcounts[grid.my_col_coord],
-                             KbarSplitbyQoffsets[grid.my_col_coord]);
-
-                // Y
-                DEBUG(DAGTM_INFO_MSG, "mYsub is being saved ... ");
-                h5save_byrow(h5ckpfileid, dsetname_mY, mYsub,
-                             K, D, KsplitbyPoffsets[grid.my_row_coord],
-                             KbarSplitbyQcounts[grid.my_col_coord],
-                             KbarSplitbyQoffsets[grid.my_col_coord]);
-
-                //// W
-                //DEBUG(DAGTM_INFO_MSG, "mW is being saved ... ");
-                //h5save_byrow(h5ckpfileid, dsetname_mW, mW,
-                //             M + 1, D, 0,
-                //             MsplitbyRcounts[grid.my_rank],
-                //             MsplitbyRoffsets[grid.my_rank]);
-
-                // beta
-                DEBUG(DAGTM_INFO_MSG, "beta is being saved ... ");
-                h5save_scalar(h5ckpfileid, dsetname_vbeta,
-                              H5T_NATIVE_DOUBLE, &beta);
-
-                // temp
-                DEBUG(DAGTM_INFO_MSG, "Temp is being saved ... ");
-                h5save_scalar(h5ckpfileid, dsetname_temp, 
-                              H5T_NATIVE_DOUBLE, &temp);
-
-                // iter
-                DEBUG(DAGTM_INFO_MSG, "iter is being saved ... ");
-                h5save_scalar(h5ckpfileid, dsetname_iter, 
-                              H5T_NATIVE_INT, &nloop);
-                
-                // seed
-                DEBUG(DAGTM_INFO_MSG, "seed is being saved ... ");
-                h5save_scalar(h5ckpfileid, dsetname_seed, 
-                              H5T_NATIVE_INT, &dagtm_seed);
-                
-                H5FCLOSEANDSET(h5ckpfileid);
-
-                if (isForceCheckpointing)
-                {
-                    DEBUG(DAGTM_CRITIC_MSG, "Force checkpointing done");
-                    MPI_Finalize();
-                    return 0;
-                }
-            }
-
-            if (nloop >= maxloop)
+            if (maxloop && (nloop >= maxloop))
             {
                 isLast = TRUE;
                 DEBUG(DAGTM_INFO_MSG, "Max loop reached ... ");
