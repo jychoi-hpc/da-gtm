@@ -1,6 +1,6 @@
 include (../CMakeLists.comm.txt)
 
-add_definitions (-Wno-write-strings)
+##add_definitions (-Wno-write-strings)
 
 set (DAGTM_SRCS 
     dagtm.cxx

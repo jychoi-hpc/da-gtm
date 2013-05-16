@@ -26,11 +26,20 @@
  *  @param[in] memdim memory dimension
  *  @param[in] data
  */
+#ifdef __PGI
+herr_t dagtm_h5_rw(const int type, const hid_t file_id,
+                   const char *dsetname, const hid_t dtype, const int rank,
+                   const hsize_t dimsf[], const hsize_t count[],
+                   hsize_t offset[], const hsize_t memdim[],
+                   void *data)
+
+#else
 herr_t dagtm_h5_rw(const int type, const hid_t file_id,
                    const char *dsetname, const hid_t dtype, const int rank,
                    const hsize_t dimsf[rank], const hsize_t count[rank],
                    hsize_t offset[rank], const hsize_t memdim[rank],
                    void *data)
+#endif
 {
     hid_t dataset;              /* file and dataset identifiers */
     hid_t dataspace, memspace;  /* file and memory dataspace identifiers */

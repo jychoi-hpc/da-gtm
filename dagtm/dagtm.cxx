@@ -140,6 +140,7 @@ static void help()
         "-f dataset   : dataset name for FI (default: FI)",
         "-h           : show help",
         "-i filename  : input HDF5 filename",
+        "-I           : interpolation",
         "-j number    : maximum number of iterations",
         "-K number    : number of latent data K (eg, 100, 1k, 1M)",
         "-l           : log to file",
@@ -620,6 +621,7 @@ char *dsetname_vgg = "gg.dat";
 char *dsetname_temp = "temp";
 char *dsetname_iter = "iter";
 char *dsetname_seed = "seed";
+char *dsetname_qual = "qual";
 
 GRID_INFO_T grid;
 int MPI_P_DIM = 0;
@@ -1662,6 +1664,11 @@ int main(int argc, char *argv[])
                 DEBUG(DAGTM_INFO_MSG, "seed is being saved ... ");
                 h5save_scalar(h5ckpfileid, dsetname_seed, 
                               H5T_NATIVE_INT, &dagtm_seed);
+
+                // qual
+                DEBUG(DAGTM_INFO_MSG, "qual is being saved ... ");
+                h5save_scalar(h5ckpfileid, dsetname_qual, 
+                              H5T_NATIVE_DOUBLE, &qual);
                 
                 H5FCLOSEANDSET(h5ckpfileid);
 
@@ -2427,6 +2434,26 @@ int main(int argc, char *argv[])
                                 offsets, &beta);
             }
 
+                // temp
+                DEBUG(DAGTM_INFO_MSG, "Temp is being saved ... ");
+                h5save_scalar(h5outfileid, dsetname_temp, 
+                              H5T_NATIVE_DOUBLE, &temp);
+
+                // iter
+                DEBUG(DAGTM_INFO_MSG, "iter is being saved ... ");
+                h5save_scalar(h5outfileid, dsetname_iter, 
+                              H5T_NATIVE_INT, &nloop);
+                
+                // seed
+                DEBUG(DAGTM_INFO_MSG, "seed is being saved ... ");
+                h5save_scalar(h5outfileid, dsetname_seed, 
+                              H5T_NATIVE_INT, &dagtm_seed);
+
+                // qual
+                DEBUG(DAGTM_INFO_MSG, "qual is being saved ... ");
+                h5save_scalar(h5outfileid, dsetname_qual, 
+                              H5T_NATIVE_DOUBLE, &qual);
+                
             DEBUG(DAGTM_INFO_MSG, "id is being saved ... ");
             hsize_t dim = N;
             hsize_t ldim = NbarSplitbyPcounts[grid.my_row_coord];
