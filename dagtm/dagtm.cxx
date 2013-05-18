@@ -147,6 +147,7 @@ static void help()
         "-L number    : latent dimension",
         "-m           : EM",
         "-M number    : number of model",
+        "-n           : disable checkpointing",
         "-o filename  : output HDF5 filename",
         "-p           : log progress",
         "-P number    : checkpointing per num. loop",
