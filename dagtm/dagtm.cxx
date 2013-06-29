@@ -43,6 +43,8 @@ extern "C" {
 #define HID_INVALID -1
 #define INIT_COLLECTION_SIZE 1000
 #define INIT_QUEUE_SIZE 50
+#define BUFF_SIZE 80
+
 #ifndef HUGE_VAL
 typedef union {
     unsigned char __c[8];
@@ -131,7 +133,7 @@ static void usage()
 
 static void help()
 {
-    static char *help_msg[] = {
+    static const char *help_msg[] = {
         "-a number    : alpha (default: 0.99)",
         "-b name      : dataset name for beta (default: beta)",
         "-B name      : dataset name for label (default: lb)",
@@ -162,7 +164,7 @@ static void help()
         "-z PxQ       : define P-by-Q compute grid",
         0
     };
-    char **p = help_msg;
+    const char **p = help_msg;
 
     fprintf(stderr, "%s (%s, %s)\n", progname, _DAGTM__REV_,
             _DAGTM__DATE_);
@@ -604,25 +606,25 @@ enum COOLING schedule = EXP;
 gsl_matrix *mX = NULL, *mFI = NULL, *mW, *mA, *mB;
 gsl_vector *vlenN, *vlenK;
 
-char *filename_h5input = "INPUT.h5";
+char *filename_h5input = strdup("INPUT.h5");
 char *filename_h5output = NULL;
 char *filename_h5checkpoint = NULL;
-char *filename_h5ckprefix = "ckp.";
-char *dsetname_mT = "T.dat";
-char *dsetname_mX = "X.dat";
-char *dsetname_mFI = "FI.dat";
-char *dsetname_mW = "W.dat";
-char *dsetname_mY = "Y.dat";
-char *dsetname_mR = "R.dat";
-char *dsetname_vbeta = "beta.dat";
-char *dsetname_mM = "M.dat";
-char *dsetname_vid = "id.dat";
-char *dsetname_vlb = "lb.dat";
-char *dsetname_vgg = "gg.dat";
-char *dsetname_temp = "temp";
-char *dsetname_iter = "iter";
-char *dsetname_seed = "seed";
-char *dsetname_qual = "qual";
+char *filename_h5ckprefix = strdup("ckp.");
+char *dsetname_mT = strdup("T");
+char *dsetname_mX = strdup("X");
+char *dsetname_mFI = strdup("FI");
+char *dsetname_mW = strdup("W");
+char *dsetname_mY = strdup("Y");
+char *dsetname_mR = strdup("R");
+char *dsetname_vbeta = strdup("beta");
+char *dsetname_mM = strdup("M");
+char *dsetname_vid = strdup("id");
+char *dsetname_vlb = strdup("lb");
+char *dsetname_vgg = strdup("gg");
+char *dsetname_temp = strdup("temp");
+char *dsetname_iter = strdup("iter");
+char *dsetname_seed = strdup("seed");
+char *dsetname_qual = strdup("qual");
 
 GRID_INFO_T grid;
 int MPI_P_DIM = 0;
@@ -803,15 +805,15 @@ int main(int argc, char *argv[])
             {
             case 'k':
             case 'K':
-                unit = 1024;
+                unit = 1000;
                 break;
             case 'm':
             case 'M':
-                unit = 1024 * 1024;
+                unit = 1000 * 1000;
                 break;
             case 'g':
             case 'G':
-                unit = 1024 * 1024 * 1024;
+                unit = 1000 * 1000 * 1000;
                 break;
             }
 
@@ -2009,7 +2011,7 @@ int main(int argc, char *argv[])
 
                                 // Write M
                                 DEBUG(DAGTM_INFO_MSG, "mMsub is being saved ... ");
-                                sprintf(dsetname, "M.%ld.dat", idx);
+                                sprintf(dsetname, "M.%ld", idx);
                                 h5save_byrow(h5outfileid, dsetname, mMsub,
                                              N, L, NsplitbyQoffsets[grid.my_col_coord],
                                              NbarSplitbyPcounts[grid.my_row_coord],
@@ -2017,7 +2019,7 @@ int main(int argc, char *argv[])
 
                                 // Write X
                                 DEBUG(DAGTM_INFO_MSG, "mXsub is being saved ... ");
-                                sprintf(dsetname, "X.%ld.dat", idx);
+                                sprintf(dsetname, "X.%ld", idx);
                                 h5save_byrow(h5outfileid, dsetname, mXsub,
                                              K, L, KsplitbyPoffsets[grid.my_row_coord],
                                              KbarSplitbyQcounts[grid.my_col_coord],
@@ -2025,7 +2027,7 @@ int main(int argc, char *argv[])
 
                                 // Write Y
                                 DEBUG(DAGTM_INFO_MSG, "mYsub is being saved ... ");
-                                sprintf(dsetname, "Y.%ld.dat", idx);
+                                sprintf(dsetname, "Y.%ld", idx);
                                 h5save_byrow(h5outfileid, dsetname, mYsub,
                                              K, D, KsplitbyPoffsets[grid.my_row_coord],
                                              KbarSplitbyQcounts[grid.my_col_coord],
@@ -2033,7 +2035,7 @@ int main(int argc, char *argv[])
 
                                 // Write FI
                                 DEBUG(DAGTM_INFO_MSG, "mFIsub is being saved ... ");
-                                sprintf(dsetname, "FI.%ld.dat", idx);
+                                sprintf(dsetname, "FI.%ld", idx);
                                 h5save_byrow(h5outfileid, dsetname, mFIsub,
                                              K, M + 1, KsplitbyPoffsets[grid.my_row_coord],
                                              KbarSplitbyQcounts[grid.my_col_coord],
@@ -2041,7 +2043,7 @@ int main(int argc, char *argv[])
 
                                 // Write W
                                 DEBUG(DAGTM_INFO_MSG, "mW is being saved ... ");
-                                sprintf(dsetname, "W.%ld.dat", idx);
+                                sprintf(dsetname, "W.%ld", idx);
                                 h5save_byrow(h5outfileid, dsetname, mW,
                                              M + 1, D, 0,
                                              MsplitbyRcounts[grid.my_rank],
@@ -2063,7 +2065,7 @@ int main(int argc, char *argv[])
 
                                 // Write ctemp
                                 DEBUG(DAGTM_INFO_MSG, "ctemp is being saved ... ");
-                                sprintf(dsetname, "ctemp.%ld.dat", idx);
+                                sprintf(dsetname, "ctemp.%ld", idx);
 
                                 view =
                                     gsl_vector_subvector(vctemp,
@@ -2076,7 +2078,7 @@ int main(int argc, char *argv[])
                                                 offsets, viewDims, view.vector.data);
                                 // beta
                                 DEBUG(DAGTM_INFO_MSG, "beta is being saved ... ");
-                                sprintf(dsetname, "beta.%ld.dat", idx);
+                                sprintf(dsetname, "beta.%ld", idx);
 
                                 dims[0] = 1;
                                 offsets[0] = 0;
@@ -2517,7 +2519,7 @@ int main(int argc, char *argv[])
                                          TsplitbyRoffsets[grid.my_rank],
                                          TsplitbyRcounts[grid.my_rank]);
                 ret =
-                    dagtm_h5_rw(FALSE, h5outfileid, "Temp.dat",
+                    dagtm_h5_rw(FALSE, h5outfileid, "Temp",
                                 H5T_NATIVE_DOUBLE, 1, dims, viewDims,
                                 offsets, viewDims, view.vector.data);
 
@@ -2529,7 +2531,7 @@ int main(int argc, char *argv[])
                                          TsplitbyRoffsets[grid.my_rank],
                                          TsplitbyRcounts[grid.my_rank]);
                 ret =
-                    dagtm_h5_rw(FALSE, h5outfileid, "LLH.dat",
+                    dagtm_h5_rw(FALSE, h5outfileid, "LLH",
                                 H5T_NATIVE_DOUBLE, 1, dims, viewDims,
                                 offsets, viewDims, view.vector.data);
 
@@ -2541,7 +2543,7 @@ int main(int argc, char *argv[])
                                          TsplitbyRoffsets[grid.my_rank],
                                          TsplitbyRcounts[grid.my_rank]);
                 ret =
-                    dagtm_h5_rw(FALSE, h5outfileid, "NFree.dat",
+                    dagtm_h5_rw(FALSE, h5outfileid, "NFree",
                                 H5T_NATIVE_DOUBLE, 1, dims, viewDims,
                                 offsets, viewDims, view.vector.data);
             }
