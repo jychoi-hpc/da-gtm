@@ -1,0 +1,49 @@
+#!/bin/bash
+function usage {
+    echo "USAGE: `basename $0` options"
+    echo "Options:"
+    echo "Options:"
+}
+
+IDNAME=id
+LBNAME=lb
+MPNAME=M
+
+while getopts ":i:l:m:o:" OPTION
+do
+    case $OPTION in
+        o) OUTFILE=$OPTARG ;;
+        i) IDNAME=$OPTARG ;;
+        l) LBNAME=$OPTARG ;;
+        m) MPNAME=$OPTARG ;;
+        h|*) usage; exit;
+            ;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+if [ $# -lt 1 ]  ; then
+    usage
+    exit
+fi
+
+INFILE=$1
+BASENAME=`basename $INFILE`
+[ x$OUTFILE == x ] && OUTFILE=${BASENAME%.*}.txt
+
+PREFIX=`mktemp -d -t dagtm`
+IDFILE=$PREFIX/id.txt
+LBFILE=$PREFIX/lb.txt
+MPFILE=$PREFIX/M.txt
+
+h5dump -d $IDNAME -w 1 -y -o $IDFILE $INFILE 1> /dev/null
+h5dump -d $LBNAME -w 1 -y -o $LBFILE $INFILE 1> /dev/null
+h5dump -d $MPNAME      -y -o $MPFILE $INFILE 1> /dev/null
+
+paste $IDFILE $MPFILE $LBFILE | \
+    tr -d ',' | \
+    awk '{ print $1, $2, $3, $4, $5 }' > $OUTFILE
+
+echo "Saved ... " $OUTFILE
+echo "Done."
+
