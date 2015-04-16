@@ -8,14 +8,16 @@ function usage {
 IDNAME=id
 LBNAME=lb
 MPNAME=M
+VERBOSE=0
 
-while getopts ":i:l:m:o:" OPTION
+while getopts ":i:l:m:o:v" OPTION
 do
     case $OPTION in
         o) OUTFILE=$OPTARG ;;
         i) IDNAME=$OPTARG ;;
         l) LBNAME=$OPTARG ;;
         m) MPNAME=$OPTARG ;;
+        v) VERBOSE=1;;
         h|*) usage; exit;
             ;;
     esac
@@ -32,6 +34,8 @@ BASENAME=`basename $INFILE`
 [ x$OUTFILE == x ] && OUTFILE=${BASENAME%.*}.txt
 
 PREFIX=`mktemp -d -t dagtm`
+[ $VERBOSE == 1 ] && echo "Temporary directory ... " $PREFIX
+
 IDFILE=$PREFIX/id.txt
 LBFILE=$PREFIX/lb.txt
 MPFILE=$PREFIX/M.txt
