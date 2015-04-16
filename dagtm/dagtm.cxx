@@ -774,12 +774,12 @@ int main(int argc, char *argv[])
             {
                 fprintf(stderr,
                         "Unknown grid type : %s", optarg);
-                return 1;
+                exit(EXIT_FAILURE);
             }
             break;
         case 'h':
             help();
-            return 0;
+            exit(EXIT_SUCCESS);
             break;
         case 'H':
             isHDA = !isHDA;
@@ -1035,7 +1035,9 @@ int main(int argc, char *argv[])
     vgc = gsl_vector_alloc(Nbar);
     vgc2 = gsl_vector_alloc(Nbar);
 
-    ws_ctemp = dagtm_ctemp_workspace_alloc(Nbar, D);
+    // This requires large memory allocation: O(D-by-D)
+    // Thus, recommened to create when needed.
+    if (isDA && (schedule == AUTO)) ws_ctemp = dagtm_ctemp_workspace_alloc(Nbar, D);
     ws_dist = dagtm_dist_workspace_alloc(Kbar, Nbar);
 
     //--------------------
@@ -2361,7 +2363,6 @@ int main(int argc, char *argv[])
 
         h5outfileid = h5append(filename_h5output, grid.comm);
         {
-            herr_t ret;
             // Write T
             DEBUG(DAGTM_INFO_MSG, "mTsub is being saved ... ");
             h5save_byrow(h5outfileid, dsetname_mT, mTsub,
@@ -2592,7 +2593,7 @@ int main(int argc, char *argv[])
     gsl_matrix_free(mGFIsub);
     gsl_vector_free(vggsub);
 
-    dagtm_ctemp_workspace_free(ws_ctemp);
+    if (isDA && (schedule == AUTO)) dagtm_ctemp_workspace_free(ws_ctemp);
     dagtm_dist_workspace_free(ws_dist);
 
     if (doLogProgress)

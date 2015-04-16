@@ -1,5 +1,6 @@
 #include "comm.h"
 #include "vec.h"
+#include "assert.h"
 #include <stdlib.h>
 
 int dagtm_myid;
@@ -13,6 +14,14 @@ unsigned long dagtm_seed;
 //DEBUG(DAGTM_INFO_MSG, "Waiting for debugging ... "); \
 //while (DebugWait) { sleep(1000); }
 
+#define MALLOC(var, dim1, dim2) \
+    var = gsl_matrix_alloc(dim1, dim2); \
+    assert(var != NULL);
+
+#define ASSERTRT(var, func, ... ) \
+    var = func (__VA_ARGS__); \
+    assert(var != NULL);
+
 #ifdef COMM_IPP_ON
 #include "ipp.h"
 
@@ -22,10 +31,12 @@ void dagtm_init()
 }
 #endif
 
+/*
 double rint(double x)
 {
     return floor(x + 0.5);
 }
+*/
 
 void dagtm_setfilelog(int id)
 {
@@ -1738,13 +1749,11 @@ TYPE(gsl_block) * FUNCTION(dagtm_gsl_block, alloc) (const size_t n)
 {
     TYPE(gsl_block) * b;
 
-    /*
-    if (n == 0)
+    if (n <= 0)
     {
-        GSL_ERROR_VAL("block length n must be positive integer",
-                      GSL_EINVAL, 0);
+        GSL_ERROR_NULL("block length n must be positive integer",
+                       GSL_EINVAL);
     }
-    */
 
 #ifdef __INTEL_COMPILER
     b = (TYPE(gsl_block) *) _mm_malloc(sizeof(TYPE(gsl_block)), CLS);
@@ -1757,8 +1766,8 @@ TYPE(gsl_block) * FUNCTION(dagtm_gsl_block, alloc) (const size_t n)
 
     if (b == 0)
     {
-        GSL_ERROR_VAL("failed to allocate space for block struct",
-                      GSL_ENOMEM, 0);
+        GSL_ERROR_NULL("failed to allocate space for block struct",
+                       GSL_ENOMEM);
     }
 
 #ifdef __INTEL_COMPILER
@@ -1776,9 +1785,8 @@ TYPE(gsl_block) * FUNCTION(dagtm_gsl_block, alloc) (const size_t n)
 #else
         free(b);                /* exception in constructor, avoid memory leak */
 #endif
-
-        GSL_ERROR_VAL("failed to allocate space for block data",
-                      GSL_ENOMEM, 0);
+        GSL_ERROR_NULL("failed to allocate space for block data",
+                       GSL_ENOMEM);
     }
 
     b->size = n;
@@ -1849,8 +1857,8 @@ FUNCTION(dagtm_gsl_matrix, alloc) (const size_t n1, const size_t n2)
 
     if (m == 0)
     {
-        GSL_ERROR_VAL("failed to allocate space for matrix struct",
-                      GSL_ENOMEM, 0);
+        GSL_ERROR_NULL("failed to allocate space for matrix struct",
+                       GSL_ENOMEM);
     }
 
     /* FIXME: n1*n2 could overflow for large dimensions */
@@ -1878,7 +1886,8 @@ FUNCTION(dagtm_gsl_matrix, alloc) (const size_t n1, const size_t n2)
 
     if (block == 0)
     {
-        GSL_ERROR_VAL("failed to allocate space for block", GSL_ENOMEM, 0);
+        GSL_ERROR_NULL("failed to allocate space for block", 
+                       GSL_ENOMEM);
     }
 
     m->data = block->data;
@@ -1954,8 +1963,8 @@ TYPE(gsl_vector) * FUNCTION(dagtm_gsl_vector, alloc) (const size_t n)
 
     if (v == 0)
     {
-        GSL_ERROR_VAL("failed to allocate space for vector struct",
-                      GSL_ENOMEM, 0);
+        GSL_ERROR_NULL("failed to allocate space for vector struct", 
+                       GSL_ENOMEM);
     }
 
     block = FUNCTION(dagtm_gsl_block, alloc) (n);
@@ -1968,7 +1977,7 @@ TYPE(gsl_vector) * FUNCTION(dagtm_gsl_vector, alloc) (const size_t n)
         free(v);
 #endif
 
-        GSL_ERROR_VAL("failed to allocate space for block", GSL_ENOMEM, 0);
+        GSL_ERROR_NULL("failed to allocate space for block", GSL_ENOMEM);
     }
 
     v->data = block->data;
@@ -2073,17 +2082,27 @@ dagtm_ctemp_workspace *dagtm_ctemp_workspace_alloc(const size_t dim1,
 {
     dagtm_ctemp_workspace *ws =
         (dagtm_ctemp_workspace *) malloc(sizeof(dagtm_ctemp_workspace));
+
     ws->N = dim1;
     ws->D = dim2;
 
-    ws->Xcentered = gsl_matrix_alloc(dim1, dim2);
-    ws->resp = gsl_vector_alloc(dim1);
-    ws->S1 = gsl_matrix_alloc(dim2, dim2);
-    ws->S11 = gsl_matrix_alloc(dim2, dim2);
-    ws->S12 = gsl_matrix_alloc(dim2, dim2);
-    ws->H = gsl_matrix_alloc(2 * dim2, 2 * dim2);
-    ws->w = gsl_eigen_symm_alloc(2 * dim2);
-    ws->lambda = gsl_vector_alloc(2 * dim2);
+    //ws->Xcentered = gsl_matrix_alloc(dim1, dim2);
+    //ws->resp = gsl_vector_alloc(dim1);
+    //ws->S1  = gsl_matrix_alloc(dim2, dim2);
+    //ws->S11 = gsl_matrix_alloc(dim2, dim2);
+    //ws->S12 = gsl_matrix_alloc(dim2, dim2);
+    //ws->H   = gsl_matrix_alloc(2 * dim2, 2 * dim2);
+    //ws->w   = gsl_eigen_symm_alloc(2 * dim2);
+    //ws->lambda = gsl_vector_alloc(2 * dim2);
+
+    ASSERTRT(ws->Xcentered, gsl_matrix_alloc, dim1, dim2);
+    ASSERTRT(ws->resp, gsl_vector_alloc, dim1);
+    ASSERTRT(ws->S1, gsl_matrix_alloc, dim2, dim2);
+    ASSERTRT(ws->S11, gsl_matrix_alloc, dim2, dim2);
+    ASSERTRT(ws->S12, gsl_matrix_alloc, dim2, dim2);
+    ASSERTRT(ws->H, gsl_matrix_alloc, 2*dim2, 2*dim2);
+    ASSERTRT(ws->w, gsl_eigen_symm_alloc, 2*dim2);
+    ASSERTRT(ws->lambda, gsl_vector_alloc, 2*dim2);
 
     return ws;
 }

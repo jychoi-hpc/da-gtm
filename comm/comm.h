@@ -165,7 +165,7 @@ double dagtm_stats_sd(const gsl_vector * v);
 double dagtm_stats_sd_m(const gsl_vector * v, const double mean);
 int dagtm_matrix_colmean(const gsl_matrix * M, gsl_vector * m);
 double dagtm_vector_sum(const gsl_vector * v);
-double rint(double x);
+//double rint(double x);
 double dagtm_matrix_sum(const gsl_matrix * M);
 gsl_matrix *dagtm_matrix_alloc(const size_t n1, const size_t n2,
                                const char *filepath);
