@@ -1004,6 +1004,10 @@ int dagtm_stp(const int noLatDim, const int noLatVarSmpl,
 
         switch (noLatDim)
         {
+        case 1:
+            dagtm_rctg(gridXdim, 0, 0, X);
+            dagtm_rctg(gridFIdim, 0, 0, MU);
+            break;
         case 2:
             dagtm_rctg(gridXdim, gridXdim, 0, X);
             dagtm_rctg(gridFIdim, gridFIdim, 0, MU);
@@ -1444,13 +1448,24 @@ int dagtm_rctg(const size_t xDim, const size_t yDim, const size_t zDim,
 
     if (zDim == 0)
     {
-        for (y = 0; y < yDim; y++)
+        if (yDim == 0)
         {
             for (x = 0; x < xDim; x++)
             {
                 gsl_matrix_set(X, idx, 0, x);
-                gsl_matrix_set(X, idx, 1, y);
                 idx += 1;
+            }
+        }
+        else
+        {
+            for (y = 0; y < yDim; y++)
+            {
+                for (x = 0; x < xDim; x++)
+                {
+                    gsl_matrix_set(X, idx, 0, x);
+                    gsl_matrix_set(X, idx, 1, y);
+                    idx += 1;
+                }
             }
         }
     }
