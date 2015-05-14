@@ -2,7 +2,11 @@
 function usage {
     echo "USAGE: `basename $0` options"
     echo "Options:"
-    echo "Options:"
+    echo " -i filename : input filename"
+    echo " -o filename : output filename"
+    echo " -l name     : lable variable name"
+    echo " -m name     : map variable name"
+    echo " -v          : verbose"
 }
 
 IDNAME=id
