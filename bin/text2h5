@@ -1,0 +1,65 @@
+#!/bin/bash
+function usage {
+    echo "USAGE : `basename $0` options"
+    echo "  -d : dryrun"
+}
+
+confirm () {
+    # call with a prompt string or use a default
+    read -r -p "${1:-Are you sure? [y/N]} " response
+    case $response in
+        [yY][eE][sS]|[yY]) 
+            true
+            ;;
+        *)
+            false
+            ;;
+    esac
+}
+
+DRYRUN=0
+FORCE_Y=0
+while getopts ":dy" OPTION
+do
+    case $OPTION in
+        d) DRYRUN=1 ;;
+        y) FORCE_Y=1 ;;
+        *) usage; exit;
+            ;;
+    esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ $# -lt 1 ]  ; then
+    usage
+    exit
+fi
+
+INFILE=$1
+IDFILE=$2
+LBFILE=$3
+BASENAME=`basename $INFILE`
+OUTFILE=${BASENAME%.*}.h5
+
+echo IDFILE=$IDFILE, LBFILE=$LBFILE
+
+echo "Writing ... $OUTFILE"
+[ -f $OUTFILE ] && [ $FORCE_Y == 1 ] && rm -f $OUTFILE
+[ -f $OUTFILE ] && confirm "H5 file already exists. Overwrite? [y/N]" && \
+    rm -f $OUTFILE
+
+LEN=`cat $INFILE | wc -l | awk '{ print $1 }'`
+DIM=`head -n 1 $INFILE | wc -w | awk '{ print $1 }'`
+
+[ x$IDFILE != "x" ] && ID_CMD="$IDFILE -dims $LEN -path id -type TEXTIN -size 32"
+[ x$LBFILE != "x" ] && LB_CMD="$LBFILE -dims $LEN -path lb -type TEXTIN"
+CMD="h5import $INFILE -dims $LEN,$DIM -path T -type TEXTFP $ID_CMD $LB_CMD -o $OUTFILE"
+
+if [ $DRYRUN -eq 0 ]; then
+    $CMD
+else
+    echo $CMD
+fi
+
+echo "Done."
