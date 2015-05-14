@@ -1,6 +1,7 @@
 #!/bin/bash
 function usage {
-    echo "USAGE : `basename $0` options"
+    echo "USAGE : `basename $0` [OPTIONS] INFILE [IDFILE] [LBFILE]"
+    echo "OPTIONS:"
     echo "  -d : dryrun"
 }
 

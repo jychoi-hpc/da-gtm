@@ -13,14 +13,16 @@ IDNAME=id
 LBNAME=lb
 MPNAME=M
 VERBOSE=0
+PREFIX=
 
-while getopts ":i:l:m:o:v" OPTION
+while getopts ":i:l:m:o:p:v" OPTION
 do
     case $OPTION in
         o) OUTFILE=$OPTARG ;;
         i) IDNAME=$OPTARG ;;
         l) LBNAME=$OPTARG ;;
         m) MPNAME=$OPTARG ;;
+        p) PREFIX=$OPTARG ;;
         v) VERBOSE=1;;
         h|*) usage; exit;
             ;;
@@ -37,15 +39,18 @@ INFILE=$1
 BASENAME=`basename $INFILE`
 [ x$OUTFILE == x ] && OUTFILE=${BASENAME%.*}.txt
 
-PREFIX=`mktemp -d -t dagtm`
+[ x$PREFIX == x ] && PREFIX=`mktemp -d -t dagtm.XXXXXXXXXX`
 [ $VERBOSE == 1 ] && echo "Temporary directory ... " $PREFIX
 
 IDFILE=$PREFIX/id.txt
 LBFILE=$PREFIX/lb.txt
 MPFILE=$PREFIX/M.txt
 
-h5dump -d $IDNAME -w 1 -y -o $IDFILE $INFILE 1> /dev/null
-h5dump -d $LBNAME -w 1 -y -o $LBFILE $INFILE 1> /dev/null
+echo h5dump -d $IDNAME -w 1 -y -o $IDFILE $INFILE
+h5dump -d $IDNAME -w 5 -y -o $IDFILE $INFILE 1> /dev/null
+
+echo h5dump -d $LBNAME -w 1 -y -o $LBFILE $INFILE
+h5dump -d $LBNAME -w 4 -y -o $LBFILE $INFILE 1> /dev/null
 h5dump -d $MPNAME      -y -o $MPFILE $INFILE 1> /dev/null
 
 paste $IDFILE $MPFILE $LBFILE | \
