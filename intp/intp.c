@@ -42,17 +42,17 @@ static void usage()
 static void help()
 {
     static char *help_msg[] = {
-        "-b filename  : datafile for beta (default: beta.dat)",
-        "-f filename  : datafile for FI (default: FI.dat)",
+        "-b filename  : datafile for beta (default: beta)",
+        "-f filename  : datafile for FI (default: FI)",
         "-h           : show help",
         "-l           : log to file",
         "-n number    : number of data N (eg, 100, 1k, 1M)",
         "-o filename  : outfile for interpolated maps",
         "-p string    : prefix",
-        "-t filename  : datafile for T (default: T.dat)",
+        "-t filename  : datafile for T (default: T)",
         "-v number    : set verbose level",
-        "-w filename  : datafile for W (default: W.dat)",
-        "-x filename  : datafile for X (default: X.dat)",
+        "-w filename  : datafile for W (default: W)",
+        "-x filename  : datafile for X (default: X)",
         "-z PxQ       : define P-by-Q compute grid",
         0
     };
@@ -86,11 +86,11 @@ int main(int argc, char *argv[])
 
     char path[BUFFSIZE];
     char *prefix = "";
-    char *filename_mT = "T.dat";
-    char *filename_mX = "X.dat";
-    char *filename_mFI = "FI.dat";
-    char *filename_mW = "W.dat";
-    char *filename_vbeta = "beta.dat";
+    char *filename_mT = "T";
+    char *filename_mX = "X";
+    char *filename_mFI = "FI";
+    char *filename_mW = "W";
+    char *filename_vbeta = "beta";
     char *filename_output = NULL;
 
 #if defined MPILIB
