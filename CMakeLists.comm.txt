@@ -46,7 +46,7 @@ endif (WIN32)
 find_path(GSL_INCLUDE_DIR 
   NAMES gsl/gsl_blas.h
   HINTS
-    ENV GSL_HOME GSL_ROOT GSL_DIR
+    $ENV{GSL_HOME} $ENV{GSL_ROOT} $ENV{GSL_DIR}
   PATH_SUFFIXES
     include Include
 )
@@ -62,6 +62,7 @@ foreach(LIB ${GSL_LIBNAMES})
     PATH_SUFFIXES
       lib
   )
+  message(${GSL_LIB})
   if (GSL_LIB)
     list(APPEND GSL_LIBRARIES ${GSL_LIB})
   else (GSL_LIB)
@@ -73,7 +74,7 @@ set(GSL_LIB "GSL_LIB-NOTFOUND" CACHE INTERNAL "Scratch variable for GSL detectio
 find_library(GSL_GSL_LIBRARY 
   NAMES ${GSL_GSL_LIBNAME}
   HINTS
-    ENV GSL_HOME GSL_ROOT GSL_DIR
+    $ENV{GSL_HOME} $ENV{GSL_ROOT} $ENV{GSL_DIR}
   PATH_SUFFIXES
     lib
 )
@@ -81,7 +82,7 @@ find_library(GSL_GSL_LIBRARY
 find_library(GSL_GSLCBLAS_LIBRARY 
   NAMES ${GSL_GSLCBLAS_LIBNAME}
   HINTS
-    ENV GSL_HOME GSL_ROOT GSL_DIR
+    $ENV{GSL_HOME} $ENV{GSL_ROOT} $ENV{GSL_DIR}
   PATH_SUFFIXES
     lib
 )
@@ -180,6 +181,8 @@ elseif (APPLE)
 else ()
   if (NOT BUILD_PLATFORM)
     message("General platform ... ")
+    set (CMAKE_C_COMPILER pathcc)
+    set (CMAKE_C_FLAGS "-std=c99")
   elseif (BUILD_PLATFORM MATCHES "Cray")
     message("Cray ... ")
     add_definitions(-DMPICH_IGNORE_CXX_SEEK)
