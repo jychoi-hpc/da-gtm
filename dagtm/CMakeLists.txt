@@ -184,7 +184,7 @@ var_message(GSL_GSL_LIBRARY)
 if (USE_IPP)
   if (WIN32)
   elseif (APPLE)
-    include_directories ($ENV(IPPROOT)/include)
+    #include_directories ($ENV(IPPROOT)/include)
     target_link_libraries (
       dagtm
       $ENV{IPPROOT}/lib/libippcore.dylib

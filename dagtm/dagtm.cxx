@@ -1692,21 +1692,18 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            if (!maxloop)    // maxloop is not set
+            if (nloop > INIT_QUEUE_SIZE)    // try tp detect repeating (repeating windows size is INIT_QUEUE_SIZE)
             {
-                if (nloop > INIT_QUEUE_SIZE)    // try tp detect repeating (repeating windows size is INIT_QUEUE_SIZE) 
+                double qualavg_old = dagtm_queue_mean(&QualQueue);
+                dagtm_queue_push(&QualQueue, qual);
+                double qualavg = dagtm_queue_mean(&QualQueue);
+                double diffavg = qualavg - qualavg_old;
+                if (ABS(diffavg) < eps)
                 {
-                    double qualavg_old = dagtm_queue_mean(&QualQueue);
-                    dagtm_queue_push(&QualQueue, qual);
-                    double qualavg = dagtm_queue_mean(&QualQueue);
-                    double diffavg = qualavg - qualavg_old;
-                    if (ABS(diffavg) < eps)
-                    {
-                        DEBUG(DAGTM_INFO_MSG,
-                              "Average of %d iterations has been converged ... ",
-                              INIT_QUEUE_SIZE);
-                        break;
-                    }
+                    DEBUG(DAGTM_CRITIC_MSG,
+                          "Average of %d iterations has been converged ... ",
+                          INIT_QUEUE_SIZE);
+                    break;
                 }
             }
 
