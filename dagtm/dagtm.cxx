@@ -1119,6 +1119,7 @@ int main(int argc, char *argv[])
             dagtm_stp3_rnd(vTmu, vTsd, L, K, M, 2, gridType, mX, mFI, mW,
                            &beta);
         //DEBUG(DAGTM_CRITIC_MSG, "Init beta : %f", beta);
+        DEBUG(DAGTM_CRITIC_MSG, "SEED = %ld", dagtm_seed);
         CHECK(ret == GSL_SUCCESS);
 
         int offset = KsplitbyPoffsets[grid.my_row_coord];
