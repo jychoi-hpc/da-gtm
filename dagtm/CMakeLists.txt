@@ -98,6 +98,7 @@ target_link_libraries (
   dagtmcomm
   ${HDF5_LIBRARIES}
   ${MPI_LIBRARIES}
+  -lz
 )
 
 if (WIN32)
