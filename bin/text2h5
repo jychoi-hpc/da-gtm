@@ -3,6 +3,7 @@ function usage {
     echo "USAGE : `basename $0` [OPTIONS] INFILE [IDFILE] [LBFILE]"
     echo "OPTIONS:"
     echo "  -d : dryrun"
+    echo "  -y : force y"
 }
 
 confirm () {

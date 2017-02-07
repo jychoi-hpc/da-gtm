@@ -99,7 +99,7 @@ include_directories(${GSL_INCLUDE_DIR})
 #-----------------------------------------------------------------------------
 # Option to enable USE_MKL
 #-----------------------------------------------------------------------------
-option (USE_MKL "Enable the use of MKL" ON)
+option (USE_MKL "Enable the use of MKL" OFF)
 if (USE_MKL)
   set(MKL_LIBNAMES mkl_intel_lp64 mkl_sequential mkl_core)
 
