@@ -31,7 +31,7 @@ Dependent Libraries are as follows
 
 ### Compile
 
-1. First make a directory for building and use cmake. We recommend to
+1.  First make a directory for building and use cmake. We recommend to
 use pre-defined script, config.sh, which will execute cmake with
 proper parameters.
 
@@ -83,13 +83,16 @@ usage: dagtm [OPTIONS]
         -z PxQ       : define P-by-Q compute grid
 ```
 
-For an example, if you want to process a data file (Oil.h5) in 8000(=20x20x20) latent point space by using 4 mpi processes, you can type the followig command:
+For an example, if you want to process a data file (Oil.h5) in
+8000(=20x20x20) latent point space by using 4 mpi processes, you can
+type the followig command:
 
 ```
 $ mpiexec -n 4 dagtm -i Oil.h5 -r -K 8000
 ```
 
-In order to prepare input hdf5 file, you can use "text2h5" in `bin` directory:
+In order to prepare input hdf5 file, you can use "text2h5" in `bin`
+directory:
 
 ```
 USAGE : text2h5 [OPTIONS] INFILE [IDFILE] [LBFILE]
@@ -101,7 +104,8 @@ OPTIONS:
 Reference
 ---------
 
-Please cite the following papers in any research that uses this software:
+Please cite the following papers in any research that uses this
+software:
 
 ```
 @article{choi2010generative,
@@ -128,7 +132,8 @@ Please cite the following papers in any research that uses this software:
 Contact
 -------
 
-If you have any question regarding DA-GTM , please contact us one of the following members:
+If you have any question regarding DA-GTM , please contact us one of
+the following members:
 
 * Jong Youl Choi (jychoi@indiana.edu, choij@ornl.gov)
 * Judy Qiu (Professor at Indiana University)
