@@ -21,7 +21,7 @@ suffer from.
 Building
 --------
 
-Dependent Libraries are as follows
+Dependent libraries are as follows:
 
 * MPI
 * GNU Scientific Library (GSL)
@@ -31,16 +31,17 @@ Dependent Libraries are as follows
 
 ### Compile
 
-1.  First make a directory for building and use cmake. We recommend to
-use pre-defined script, config.sh, which will execute cmake with
-proper parameters.
+First make a directory for building and use cmake. We recommend to use
+pre-defined script, config.sh, which will execute cmake with proper
+parameters.
 
 ```
 $ config.sh
 USAGE : config.sh [options] <compiler = [gnu | intel | cray]>
 ```
 
-2. Run make command. If you have any problem, you can see details as follows:
+Then, run make command. If you have any problem, you can see details
+as follows:
 
 ```
 $ make VERBOSE=1
